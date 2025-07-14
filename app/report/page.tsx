@@ -2,14 +2,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import {
-  format,
-  isSameDay,
-  isWithinInterval,
-  subDays,
-  startOfMonth,
-} from "date-fns";
-import WeeklyChart from "@/components/WeeklyChart";
+import { isSameDay, isWithinInterval, subDays, startOfMonth } from "date-fns";
+import WeeklyChart from "../components/weeklyChart";
+import Link from "next/link";
 
 interface Trip {
   id: number;
@@ -113,9 +108,9 @@ export default function ReportPage() {
       )}
 
       <div className="mt-6 text-center">
-        <a href="/" className="text-blue-600 hover:underline">
+        <Link href="/" className="text-blue-600 hover:underline">
           ↩ الرجوع إلى الصفحة الرئيسية
-        </a>
+        </Link>
       </div>
     </main>
   );

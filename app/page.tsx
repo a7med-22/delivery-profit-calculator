@@ -1,10 +1,10 @@
 // app/page.tsx
 "use client";
 
-import TripForm from "@/components/TripForm";
-import TripTable from "@/components/TripTable";
-import Summary from "@/components/Summary";
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
+import TripForm from "./components/TripForm";
+import TripTable from "./components/TripTable";
+import Link from "next/link";
 
 interface Trip {
   id: number;
@@ -15,50 +15,79 @@ interface Trip {
   valuePerKm: number;
 }
 
-export default function HomePage() {
+export default function Home() {
   const [trips, setTrips] = useState<Trip[]>([]);
+  const [costPerKm, setCostPerKm] = useState<number | null>(null);
 
   useEffect(() => {
-    const stored = localStorage.getItem("trips");
-    if (stored) {
-      setTrips(JSON.parse(stored));
+    const storedTrips = localStorage.getItem("trips");
+    if (storedTrips) {
+      setTrips(JSON.parse(storedTrips));
+    }
+
+    const carSettings = localStorage.getItem("carSettings");
+    if (carSettings) {
+      const data = JSON.parse(localStorage.getItem("carSettings")!);
+      const costPerKm =
+        (data.fuelConsumption / 100) * data.fuelPrice + data.extraCostPerKm;
+      setCostPerKm(Number(costPerKm.toFixed(2)));
     }
   }, []);
 
-  useEffect(() => {
-    localStorage.setItem("trips", JSON.stringify(trips));
-  }, [trips]);
+  const addTrip = ({
+    distance,
+    price,
+  }: {
+    distance: number;
+    price: number;
+  }) => {
+    if (costPerKm === null) {
+      alert("يرجى إدخال بيانات السيارة أولاً من صفحة الإعدادات.");
+      return;
+    }
 
-  const addTrip = (trip: { distance: number; price: number }) => {
-    const costPerKm = 3.0;
-    const cost = trip.distance * costPerKm;
-    const profit = trip.price - cost;
-    const valuePerKm = trip.price / trip.distance;
+    const cost = distance * costPerKm;
+    const profit = price - cost;
+    const valuePerKm = price / distance;
 
-    setTrips([
-      ...trips,
-      {
-        ...trip,
-        cost,
-        profit,
-        valuePerKm,
-        id: Date.now(),
-      },
-    ]);
+    const newTrip: Trip = {
+      id: Date.now(),
+      distance,
+      price,
+      cost,
+      profit,
+      valuePerKm,
+    };
+
+    const updatedTrips = [...trips, newTrip];
+    setTrips(updatedTrips);
+    localStorage.setItem("trips", JSON.stringify(updatedTrips));
   };
 
   const deleteTrip = (id: number) => {
-    setTrips(trips.filter((trip) => trip.id !== id));
+    const updated = trips.filter((t) => t.id !== id);
+    setTrips(updated);
+    localStorage.setItem("trips", JSON.stringify(updated));
   };
 
   return (
-    <main className="min-h-screen p-4 bg-gray-100 text-gray-800">
-      <h1 className="text-3xl font-bold mb-4 text-center">
-        حاسبة أرباح الرحلات
+    <main className="min-h-screen bg-white p-4">
+      <h1 className="text-3xl font-bold mb-6 text-center">
+        حاسبة توصيل المشاوير
       </h1>
+
       <TripForm onAddTrip={addTrip} />
       <TripTable trips={trips} onDeleteTrip={deleteTrip} />
-      <Summary trips={trips} />
+
+      <div className="text-center mt-6">
+        <Link href="/car" className="text-blue-600 hover:underline">
+          ⚙️ إعدادات السيارة
+        </Link>
+        <span className="mx-2">|</span>
+        <Link href="/report" className="text-blue-600 hover:underline">
+          📊 التقرير
+        </Link>
+      </div>
     </main>
   );
 }
